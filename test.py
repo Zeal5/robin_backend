@@ -6,10 +6,10 @@ from databse.wallet_manager import add_user_keys
 
 
 
-users = [i for i in range(30,50)]
+users = [i for i in range(110,112)]
 
 
-wallets = [f'wallet-{i}' for i in range(100)]
+wallets = [f'wallet-{i}' for i in range(10)]
 
 
 async def test(user):

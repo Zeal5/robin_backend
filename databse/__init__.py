@@ -3,8 +3,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 
-
-engine = create_engine('postgresql://postgres:zeal@localhost:5432/robin')
+ip = "192.168.56.1"
+engine = create_engine(f'postgresql://postgres:zeal@{ip}:5432/robin')
 Base = declarative_base()
 
 

@@ -28,9 +28,7 @@ class Wallet:
 
 
 try:
-    w = Wallet(
-        "connect amazing charge buyers demand alien current churn critic pistol crack debate"
-    )
+    w = Wallet()
     print(w.account)
     print(w.private_key)
     print(w.address)

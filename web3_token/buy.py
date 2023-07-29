@@ -3,7 +3,7 @@ from . import web3, token_abi
 import json
 
 
-class Buy_Token:
+class Token:
     """Buy token afater analyzing metrics (decimals, eth_balance, check_sum)"""
 
     def __init__(self, token_address, buyer_address) -> None:
@@ -17,18 +17,24 @@ class Buy_Token:
             self.token = web3.to_checksum_address(self.token)
         self.account = web3.eth.default_account = self.buyer_address
 
+    async def _get_decimals(self) -> int:
+        """Get decimals of a contract"""
+        loop = asyncio.get_event_loop()
+        contract = web3.eth.contract(address=self.token, abi=token_abi)
+        decimals = await loop.run_in_executor(
+            None, lambda: contract.functions.decimals().call()
+        )
+        return decimals
+
     async def get_token_balance(self) -> int:
+        """Return token balance after dividing by token decimals """
         loop = asyncio.get_event_loop()
 
         contract = web3.eth.contract(address=self.token, abi=token_abi)
-        token_balance = await loop.run_in_executor(None,lambda :contract.functions.balanceOf(self.buyer_address).call())
-        decimals = await self.get_decimals()
+        token_balance = await loop.run_in_executor(
+            None, lambda: contract.functions.balanceOf(self.buyer_address).call()
+        )
+        decimals = await self._get_decimals()
         token_balance = token_balance / (10**decimals)
 
         return token_balance
-
-    async def get_decimals(self) -> int:
-        loop = asyncio.get_event_loop()
-        contract = web3.eth.contract(address=self.token, abi=token_abi)
-        decimals = await loop.run_in_executor(None,lambda : contract.functions.decimals().call())
-        return decimals

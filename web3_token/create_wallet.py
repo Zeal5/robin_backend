@@ -27,10 +27,10 @@ class Wallet:
         self.private_key = self.account._private_key.hex()
 
 
-try:
-    w = Wallet()
-    print(w.account)
-    print(w.private_key)
-    print(w.address)
-except Exception as e:
-    print(e)
+# try:
+#     w = Wallet()
+#     print(w.account)
+#     print(w.private_key)
+#     print(w.address)
+# except Exception as e:
+#     print(e)

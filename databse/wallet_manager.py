@@ -42,3 +42,6 @@ def get_user_keys(tg_id):
     
     finally:
         session.close()
+
+"""connect amazing charge pottery demand alien current churn critic pistol crack debate"""
+"""dcda4dc6f971dd612f8c06ee4061f1db36992aa8edbc44737ecc9dee1212a9de"""

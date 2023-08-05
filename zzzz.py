@@ -1,31 +1,33 @@
-"""
-
-
-from web3_token import web3
-import asyncio
-from web3_token.buy import Buy_Token
+import requests
+from threading import Thread
+from concurrent.futures import ThreadPoolExecutor
 import time
 
-
-s = time.time()
-
-tokens = ["0x571E21a545842C6CE596663cdA5CaA8196AC1c7A"]
-
-owner = ["0x755fBECD5FCEf89a27c995E55bF99d1eC1d0e1Fc"]
-tasks = []
-
-async def main():
-    for i in range(len(tokens)):
-        buyer = Buy_Token(tokens[i],owner[i])
-        tasks.append(buyer.get_token_balance())
-
-    results = await asyncio.gather(*tasks)
-    
-    for balance in results:
-        print(balance)
+def send_request(url, request_number):
+    try:
+        response = requests.get(f"{url}/{request_number}")
+        print(f"Request {request_number}: Status code for {url}: {response.status_code}")
+    except requests.RequestException as e:
+        print(f"Request {request_number}: Error occurred while sending request to {url}: {e}")
 
 
-asyncio.run(main())
+def main():
+    urls = ["http://localhost:8000"] * 10000  # Replace with your server URL
 
-print(time.time() - s)
-"""
+    start_time = time.time()
+
+    # Use ThreadPoolExecutor to send requests concurrently
+    with ThreadPoolExecutor(max_workers=1000) as executor:
+        for i, url in enumerate(urls, start=1):
+            executor.submit(send_request, url, i)
+
+    end_time = time.time()
+
+    print(f"Total time taken: {end_time - start_time:.2f} seconds")
+
+if __name__ == "__main__":
+    main()
+
+
+
+

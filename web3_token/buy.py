@@ -4,7 +4,7 @@ import json
 
 
 class Token:
-    """Buy token afater analyzing metrics (decimals, eth_balance, check_sum)"""
+    """Buy token after analyzing metrics (decimals, eth_balance, check_sum)"""
 
     def __init__(self, token_address, buyer_address) -> None:
         self.buyer_address = buyer_address

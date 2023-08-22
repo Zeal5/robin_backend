@@ -6,11 +6,10 @@ import os
 
 app = FastAPI()
 
-hostname = "192.168.56.1"
-database_name = "robin"
-port = 5432
-owner = "postgres"
-password = "zeal"
+
+
+
+
 
 
 @app.on_event("startup")

@@ -3,12 +3,13 @@ from . import Session
 from sqlalchemy.future import select
 from sqlalchemy import insert
 
-async def check_user_exists(_id:int) -> bool:
-    """ Checks if user with tg_id exists in database
+
+async def check_user_exists(_id: int) -> bool:
+    """Checks if user with tg_id exists in database
 
     Args:
         ``tg_id``: The Telegram ID of user
-    
+
     Returns:
         ``bool`` : True if user with tg_id exists
     """
@@ -18,9 +19,7 @@ async def check_user_exists(_id:int) -> bool:
             return True if users.scalars().first() else False
 
 
-
-
-async def add_user_keys(tg_id) -> bool:
+async def add_user_and_keys(tg_id:int,address:str,secret:str ) -> bool:
     """Add user, wallets to the database.
 
     Args:
@@ -34,12 +33,10 @@ async def add_user_keys(tg_id) -> bool:
     async with Session() as s:
         async with s.begin():
             # user =  await s.execute(select(User).where(User.tg_id == tg_id))
-            stmt = insert(Users).values(tg_id =tg_id)
-            await s.execute(stmt)
-
-    
-
-
+            # stmt = insert(Users).values(tg_id=tg_id)
+            # await s.execute(stmt)
+            new_user = Users(tg_id= tg_id)
+            new_wallet = Wallets(user=new_user, secret=secret,address= address)
 
 
 

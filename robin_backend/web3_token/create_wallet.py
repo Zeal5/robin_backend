@@ -5,32 +5,36 @@ class Wallet:
     """Generate a wallet address based on menmonic,private_key
     OR Create new wallet private_key and address if no parameter is given"""
 
-    def __init__(self, private_key: str = None):
-        if " " in private_key:
-            print("memonic")
+    def __init__(self):
+        pass
+
+    def create_wallet(self, private_key: str = None):
+
+        if private_key is None:
+            account = Account.create()
+        elif " " in private_key:
+                # ("memonic")
             Account.enable_unaudited_hdwallet_features()
-            self.account = Account.from_mnemonic(private_key, f"m/44'/60'/0'/0")
+            try :
+                account = Account.from_mnemonic(private_key, f"m/44'/60'/0'/0")
+            except Exception as e:
+                return {'error' : e}
         elif private_key.startswith("0x"):
-            print("0xkey")
+            # ("0xkey")
             private_key = private_key[2:]
-            self.account = Account.from_key(private_key)
+            account = Account.from_key(private_key)
         elif len(private_key) == 64:
-            print("64 len")
-
-            self.account = Account.from_key(private_key)
-
-        else:
-            print("none")
-            self.account = Account.create()
-
-        self.address = self.account.address
-        self.private_key = self.account._private_key.hex()
+            # ("64 len")
+            account = Account.from_key(private_key)
+            
+        
+        return {'address': account.address, 'secret_key' : account._private_key.hex()}
 
 
 # try:
 #     w = Wallet()
-#     print(w.account)
-#     print(w.private_key)
-#     print(w.address)
+#     return(w.account)
+#     return(w.private_key)
+#     return(w.address)
 # except Exception as e:
-#     print(e)
+#     return(e)

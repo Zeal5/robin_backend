@@ -16,16 +16,15 @@ class Base(DeclarativeBase):
 """
 id,
 tg_id,
-keys ( foreign key) 
+wallets ( foreign key) 
 """
+
+
 class Users(Base):
     __tablename__ = "user"
-    # id = Column(Integer, primary_key=True)
-    # subscribed: Mapped[Optional[bool]] = mapped_column(Boolean, default=False)
-    # tester: Mapped[Optional[bool]] = mapped_column(Boolean, default=False)
     id: Mapped[int] = mapped_column(primary_key=True)
-    tg_id: Mapped[int] = mapped_column(nullable=False, index=True, unique= True)
-    keys = relationship("Wallets", back_populates="user")
+    tg_id: Mapped[int] = mapped_column(nullable=False, index=True, unique=True)
+    wallets = relationship("Wallets", back_populates="user")
 
 
 # Define the Keys table
@@ -34,8 +33,10 @@ id,
 user_id,
 key_name,
 kay_value,
-user (foreign key0
+user (foreign key)
 """
+
+
 class Wallets(Base):
     __tablename__ = "wallet"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -43,4 +44,4 @@ class Wallets(Base):
     secret: Mapped[str] = mapped_column(String, nullable=False)
     address: Mapped[str] = mapped_column(String, nullable=False)
     name: Mapped[Optional[str]] = mapped_column(String)
-    user = relationship("Users", back_populates="keys")
+    user = relationship("Users", back_populates="wallets")

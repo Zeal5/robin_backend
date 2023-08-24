@@ -28,7 +28,7 @@ class Wallet:
             account = Account.from_key(private_key)
             
         
-        return {'address': account.address, 'secret_key' : account._private_key.hex()}
+        return {'address': account.address, 'secret' : account._private_key.hex()}
 
 
 # try:

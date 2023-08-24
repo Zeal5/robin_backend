@@ -1,4 +1,9 @@
-from database.wallet_manager import add_user_keys, check_user_exists
+from database.wallet_manager import (
+    check_wallet_exists_for_user,
+    _check_user_exists,
+    add_keys_when_user,
+    add_user_and_keys,
+)
 from web3_token.create_wallet import Wallet
 from fastapi import APIRouter
 from typing import Optional, Union
@@ -7,9 +12,10 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
+
 class User_Wallet(BaseModel):
     id: int
-    secret: Optional[str] 
+    secret: Optional[str] = None
 
 
 # This function is called to add users and keys to the database
@@ -25,18 +31,33 @@ async def add_user_wallet(data: User_Wallet):
         ``secret``: Wallet secret key (24|12 letters or hex)
     Returns:
         ``Bool`` : True is key added successfully else false"""
-    print('start')
-    if await check_user_exists(data.id): #when want to generate new wallet keys and user is already present in db 
-        print('step2')
-        wallet1 = Wallet().create_wallet(data.secret)
-        print(wallet1)
-        return wallet1['address']
 
-    # new_id = await add_user_keys(tg_id)
-    # if isinstance(secret, str) and secret.lower() == "true":
-    #     print(secret)
-    #     print(type(secret))
-    #     return "True"
+    wallet_gen = Wallet().create_wallet(data.secret)
+    if isinstance(data.secret, str):  # create new wallet | old user
+        wallet_exists = await check_wallet_exists_for_user(data.id, data.secret)
 
-    # print(secret)
-    # print(type(secret))
+        if wallet_exists["user"] and wallet_exists["wallet"]:
+            return {"message": "wallet already exists"}
+        elif wallet_exists["user"]:
+            added_keys = await add_keys_when_user(
+                data.id, wallet_gen["secret"], wallet_gen["address"]
+            )
+            return added_keys, "keys added for existing user"
+        else:
+            _add_user_and_keys = await add_user_and_keys(
+                data.id, wallet_gen["secret"], wallet_gen["address"]
+            )
+            return _add_user_and_keys, "keys and user added"
+
+    user_exists = await _check_user_exists(data.id)
+
+    if isinstance(user_exists, int):
+        adding_user = await add_keys_when_user(
+            data.id, wallet_gen["secret"], wallet_gen["address"]
+        )
+        return adding_user, "adding keys for existing user"
+
+    _add_user_and_keys = await add_user_and_keys(
+        data.id, wallet_gen["secret"], wallet_gen["address"]
+    )
+    return _add_user_and_keys, "keys and user added"

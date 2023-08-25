@@ -8,8 +8,8 @@ class Wallet:
     def __init__(self):
         pass
 
-    def create_wallet(self, private_key: str = None):
-
+    def create_wallet(self, private_key: str = None) -> dict | bool:
+        account = False
         if private_key is None:
             account = Account.create()
         elif " " in private_key:
@@ -26,9 +26,11 @@ class Wallet:
         elif len(private_key) == 64:
             # ("64 len")
             account = Account.from_key(private_key)
-            
         
-        return {'address': account.address, 'secret' : account._private_key.hex()}
+        if not account:
+            return False
+        
+        return {'address': account.address or '', 'secret' : account._private_key.hex() or ''}
 
 
 # try:

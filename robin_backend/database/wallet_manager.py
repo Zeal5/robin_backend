@@ -3,6 +3,23 @@ from . import Session
 from sqlalchemy.future import select
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import insert, select, exists
+import functools
+
+
+# test wrapper afterwards
+def get_wallets_count(func):
+    @functools.wraps(func)
+    async def wraped(tg_id, *args, **kwargs):
+        wallets = {i.id: i.address for i in await get_wallets(tg_id)}
+        print(len(wallets))
+        print(wallets)
+        if len(wallets.keys()) <= 6:
+            print("keys less then 7")
+            return await func(tg_id, *args, **kwargs)
+        else:
+            return "Max 7 wallets are allowed"
+
+    return wraped
 
 
 async def _check_user_exists(_id: int) -> int | dict:
@@ -25,10 +42,10 @@ async def _check_user_exists(_id: int) -> int | dict:
 
 async def check_wallet_exists_for_user(_id: int, secret: str) -> dict:
     return_dict = {"user": False, "wallet": False}
+    user_id: int = await _check_user_exists(_id)
     async with Session() as session:
         async with session.begin():
             try:
-                user_id: int = await _check_user_exists(_id)
                 if not isinstance(user_id, dict):
                     return_dict["user"] = True
                     stmt = select(
@@ -71,6 +88,7 @@ async def add_user_and_keys(tg_id: int, secret: str, address: str) -> bool | dic
                 return {"error": e}
 
 
+@get_wallets_count
 async def add_keys_when_user(tg_id: int, secret: str, address: str) -> bool | dict:
     async with Session() as s:
         async with s.begin():
@@ -84,6 +102,19 @@ async def add_keys_when_user(tg_id: int, secret: str, address: str) -> bool | di
                 s.add(wallet)
                 await s.commit()
                 return True
+            except Exception as e:
+                return {"error": e}
+
+
+async def get_wallets(tg_id: int):
+    user_pk = await _check_user_exists(tg_id)
+    async with Session() as s:
+        async with s.begin():
+            try:
+                user_wallets = await s.execute(
+                    select(Wallets).where(Wallets.user_id == user_pk)
+                )
+                return user_wallets.scalars().all()
             except Exception as e:
                 return {"error": e}
 

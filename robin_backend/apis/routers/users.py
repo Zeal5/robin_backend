@@ -14,7 +14,7 @@ router = APIRouter()
 
 
 class User_Wallet(BaseModel):
-    id: int
+    tg_id: int
     secret: Optional[str] = None
 
 
@@ -35,32 +35,34 @@ async def add_user_wallet(data: User_Wallet):
     wallet_gen = Wallet().create_wallet(data.secret)
     if wallet_gen:
         if isinstance(data.secret, str):  # create new wallet | old user
-            wallet_exists = await check_wallet_exists_for_user(data.id, data.secret)
+            wallet_exists = await check_wallet_exists_for_user(data.tg_id, data.secret)
 
             if wallet_exists["user"] and wallet_exists["wallet"]:
                 return {"message": "wallet already exists"}
             elif wallet_exists["user"]:
                 added_keys = await add_keys_when_user(
-                    data.id, wallet_gen["secret"], wallet_gen["address"]
+                    data.tg_id, wallet_gen["secret"], wallet_gen["address"]
                 )
                 return added_keys, "keys added for existing user"
             else:
                 _add_user_and_keys = await add_user_and_keys(
-                    data.id, wallet_gen["secret"], wallet_gen["address"]
+                    data.tg_id, wallet_gen["secret"], wallet_gen["address"]
                 )
                 return _add_user_and_keys, "keys and user added"
 
-        user_exists = await _check_user_exists(data.id)
+        user_exists = await _check_user_exists(data.tg_id)
 
         if isinstance(user_exists, int):
             adding_user = await add_keys_when_user(
-                data.id, wallet_gen["secret"], wallet_gen["address"]
+                tg_id=data.tg_id,
+                secret=wallet_gen["secret"],
+                address=wallet_gen["address"],
             )
             return adding_user, "adding keys for existing user"
 
         _add_user_and_keys = await add_user_and_keys(
-            data.id, wallet_gen["secret"], wallet_gen["address"]
+            data.tg_id, wallet_gen["secret"], wallet_gen["address"]
         )
         return _add_user_and_keys, "keys and user added"
-    
+
     return "Invalid key"

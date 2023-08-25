@@ -17,26 +17,36 @@ with open("config.json", "r") as configs_files:
     configs = json.load(configs_files)
 
 
-async def make_req_to_server(tg_id: int, secret: str | bool = False):
+async def create_new_wallet(tg_id: int, secret: str | bool = False):
     headers = {"Content-Type": "application/json"}
     if not secret:
-        data = {"id": tg_id}
+        data = {"tg_id": tg_id}
         request = requests.post(
             configs["backend_url_create_wallet"], json=data, headers=headers
         )
+        # @TODO
         return request.json()
     elif not secret.startswith(r"/"):
-        data = {"id": tg_id, "secret": secret}
+        data = {"tg_id": tg_id, "secret": secret}
         request = requests.post(
             configs["backend_url_create_wallet"], json=data, headers=headers
         )
         return request.json()
+
+
+async def get_wallets(tg_id: int):
+    headers = {"Content-Type": "application/json"}
+    data = {"tg_id": tg_id}
+    response = requests.post(
+        configs["backend_url_get_wallets"], json=data, headers=headers
+    )
+    return response.json()
 
 
 async def got_keys(update: Update, context: CallbackContext) -> int:
     response = "private key and recovery phrase can not start with /"
     if not (update.effective_message.text).startswith("/"):
-        response = await make_req_to_server(
+        response = await create_new_wallet(
             update.effective_user.id, update.effective_message.text
         )
 
@@ -60,13 +70,13 @@ async def button_click(update: Update, context: CallbackContext) -> int:
             chat_id=update.effective_chat.id, text="creating new wallet..."
         )
         intermediate_message_id = intermediate_message.id
-        request = await make_req_to_server(update.effective_user.id)
+        request = await create_new_wallet(update.effective_user.id)
 
         # deleting intermediate message
         await context.bot.delete_message(
             chat_id=update.effective_chat.id, message_id=intermediate_message_id
         )
-        await query.message.reply_text(f"{request.json()}")
+        await query.message.reply_text(f"{request}")
         return ConversationHandler.END
 
     if button_choice == "add_wallet":
@@ -76,18 +86,30 @@ async def button_click(update: Update, context: CallbackContext) -> int:
         )
         context.user_data["intermediate_message_id"] = intermediate_message.id
         return ADD_SECRET
+    if button_choice == "get_wallets":
+        response = await get_wallets(update.effective_user.id)
+        wallets = ""
+        for k, v in enumerate(response.values(), 1):
+            wallets += f"{k} : {v} \n"
+
+        await context.bot.send_message(update.effective_chat.id, wallets)
+        return ConversationHandler.END
 
 
 async def start_command(update: Update, context: CallbackContext) -> int:
     # Create the two buttons
     button1 = InlineKeyboardButton("Create New Wallet", callback_data="create_wallet")
     button2 = InlineKeyboardButton("Add Wallet", callback_data="add_wallet")
+    button3 = InlineKeyboardButton("Get Wallets", callback_data="get_wallets")
 
     # Combine the two buttons in a single row, each list represents a new row
     keyboard = [
         [
             button1,
             button2,
+        ],
+        [
+            button3,
         ],
     ]
 

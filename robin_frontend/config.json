@@ -1,4 +1,5 @@
 {
     "backend_url_create_wallet": "http://127.0.0.1:8000/create_wallet",
-    "backend_url_get_wallets" : "http://127.0.0.1:8000/get_wallets"
+    "backend_url_get_wallets" : "http://127.0.0.1:8000/get_wallets",
+    "backend_url_get_balance" :  "http://127.0.0.1:8000/buy"
 }

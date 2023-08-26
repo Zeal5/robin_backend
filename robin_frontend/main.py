@@ -16,7 +16,7 @@ from telegram.ext import (
 
 # import custom pakages
 from cogs.start import start_command, got_keys, conv_handler
-
+from cogs.swap_tokens import get_balance
 load_dotenv()
 token = os.getenv("TOKEN")
 
@@ -25,6 +25,7 @@ def main():
     print("bot started")
     app = Application.builder().token(token).build()
     app.add_handler(conv_handler)
+    app.add_handler(CommandHandler("balance", get_balance))
 
     # polling
     app.run_polling(3, allowed_updates=Update.ALL_TYPES)

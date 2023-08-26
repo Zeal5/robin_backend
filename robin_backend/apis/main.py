@@ -12,8 +12,9 @@ import os
 from database import engine
 from database.models import Users, Wallets, Base
 from sqlalchemy.ext.asyncio import AsyncSession  # for type checking session
-from apis.routers import users
-from apis.routers import wallets
+from apis.routers import users,wallets,buy_tokens
+
+
 
 app = FastAPI()
 
@@ -31,6 +32,7 @@ async def app_shutdown():
 
 app.include_router(users.router)
 app.include_router(wallets.router)
+app.include_router(buy_tokens.router)
 # @app.post("/{_id}/{secret}/{address}")
 # async def add_user(_id, secret, address):
 #     response = await add_user_when_secret(_id, secret, address)

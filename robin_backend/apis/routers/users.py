@@ -4,7 +4,7 @@ from database.wallet_manager import (
     add_keys_when_user,
     add_user_and_keys,
 )
-from web3_token.create_wallet import Wallet
+from on_chain.create_wallet import Wallet
 from fastapi import APIRouter
 from typing import Optional, Union
 

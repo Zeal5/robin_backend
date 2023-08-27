@@ -1,4 +1,4 @@
-from web3 import Web3
+
 import os 
 import json
 from dotenv import load_dotenv
@@ -7,10 +7,7 @@ load_dotenv()
 # INFURAT_TOKEN = os.getenv("INFURA_KEYS")
 # web3_provider_url = f"https://mainnet.infura.io/v3/{INFURAT_TOKEN}"
 
-web3_provider_url = "http://127.0.0.1:8545"
 
-
-web3 = Web3(Web3.HTTPProvider(web3_provider_url))
 
 #The geth_poa_middleware is required by BSC, Polygon and Fantom since they are all Proof-of-Authority chains.
 #w3.middleware_onion.inject(geth_poa_middleware, layer=0)

@@ -105,7 +105,7 @@ async def add_keys_when_user(tg_id: int, secret: str, address: str) -> bool | di
             except Exception as e:
                 return {"error": e}
 
-
+#@TODO add check if user/wallet doesn't exist revert
 async def get_wallets(tg_id: int):
     user_pk = await _check_user_exists(tg_id)
     async with Session() as s:

@@ -15,9 +15,17 @@ async def get_balance(update: Update, context: CallbackContext) -> None:
     headers = {"Content-Type": "application/json"}
     data = {'tg_id': update.effective_user.id}
     response = requests.post(
-            configs["backend_url_get_balance"], json=data, headers=headers
+            configs["backend_url_get_account_balance"], json=data, headers=headers
         ).text
     
     await update.message.reply_text(f"wallet = {response}")
 
 
+async def get_token_balance(update:Update, context:CallbackContext) :
+    headers = {"Content-Type": "application/json"}
+    data = {'tg_id': update.effective_user.id}
+    response = requests.post(
+            configs["backend_url_get_token_balance"], json=data, headers=headers
+        ).text
+    
+    await update.message.reply_text(f"balance = {response}")

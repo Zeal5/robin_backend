@@ -1,10 +1,14 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-
+import json
+from routers.helpers.formate_balance import format_number
 from database.wallet_manager import get_wallets
 from on_chain.buy import Token
 router = APIRouter()
 
+
+weth_address = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+dai_address = "0x6B175474E89094C44Da98b954EedeAC495271d0F"
 
 class TokenForSwap(BaseModel):
     token_address:str = None
@@ -16,22 +20,31 @@ class TokenForSwap(BaseModel):
 swap for tokens = 0
 swap for eth = 1
 """
-
+#@TODO change function later to implement actual buy sell
 @router.post("/buy")
 async def swap_tokens(data:TokenForSwap):
-    wallet = await get_wallets(data.tg_id)
+    # wallet = await get_wallets(data.tg_id)
 
-    key = wallet[0]
-    print(key.address)
-    address = Token(buyer_address=key.address,token_address="0x5a0f68ffc24C4338b36a059C789B27337c5F82C3")
-    balance = await address.swap_tokens_for_eth(0.5)
+    # key = wallet[0]
+    # print(key.address)
+    address = Token(buyer_address="0x136be469A3203D20a853a546Af89867AE4B437b9",
+                    token_address=weth_address,
+                    buyer_secret="0xc55c8750c851c723e36485856c96760f33efb7b3b281e9a0ecf674f3070f0939"
+                    
+                    )
+    # balance = await address.swap_tokens_for_eth(1731.17)
+
+    balance = await address.swap_tokens_for_eth(1700)
 
     print(balance)
-    return balance or 0
+    # return (balance)
 
 @router.post("/get_token_balance")
-async def get_token_balance(data:TokenForSwap) ->int:
-    token = Token(data.token_address)
-    balance = await token.get_token_balance()
-    print(f"token balance : {balance}")
-    return balance
+async def get_token_balance(data:TokenForSwap) ->float:
+    # token = Token(data.token_address)
+    address = Token(buyer_address="0x136be469A3203D20a853a546Af89867AE4B437b9",
+                    token_address=weth_address
+                    )
+    balance = await address.get_token_balance()
+    print(f"token balance : {format_number(balance)}")
+    return f"{format_number(balance)}"

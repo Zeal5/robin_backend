@@ -40,3 +40,4 @@ app.include_router(buy_tokens.router)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", reload=True)
+

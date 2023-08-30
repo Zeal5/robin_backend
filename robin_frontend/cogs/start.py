@@ -124,8 +124,8 @@ async def start_command(update: Update, context: CallbackContext) -> int:
 async def fall_back(update: Update, context: CallbackContext):
     await update.message.reply_text("You have to click one of the buttons!")
     # Call the start command handler to show the buttons again
-    await start_command(update, context)
-
+    # await start_command(update, context)
+    return ConversationHandler.END
 
 conv_handler = ConversationHandler(
     entry_points=[CommandHandler("start", start_command)],

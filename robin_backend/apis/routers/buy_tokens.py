@@ -10,6 +10,7 @@ router = APIRouter()
 weth_address = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
 dai_address = "0x6B175474E89094C44Da98b954EedeAC495271d0F"
 usdt = "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+
 class TokenForSwap(BaseModel):
     token_address:str = None
     tg_id:int
@@ -35,10 +36,12 @@ async def swap_tokens(data:TokenForSwap):
     
     # balance = await address.swap_tokens_for_eth(1731.17)
 
-    balance = await address.swap_tokens_for_tokens(100)
+    # balance = await address.swap_tokens_for_tokens(100)
+    # balance = await address.swap_eth_for_tokens(0.1)
+    balance = await address.swap_tokens_for_eth(800000)
 
     print(balance)
-    # return (balance)
+    return (balance)
 
 @router.post("/get_token_balance")
 async def get_token_balance(data:TokenForSwap):

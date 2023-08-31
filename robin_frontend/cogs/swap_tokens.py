@@ -11,14 +11,20 @@ with open("config.json", "r") as configs_files:
 
 
 
-async def get_balance(update: Update, context: CallbackContext) -> None:
+async def swap_token(update: Update, context: CallbackContext) -> None:
     headers = {"Content-Type": "application/json"}
     data = {'tg_id': update.effective_user.id}
     response = requests.post(
-            configs["backend_url_get_account_balance"], json=data, headers=headers
+            configs["backend_url_buy"], json=data, headers=headers
         ).text
     
     await update.message.reply_text(f"wallet = {response}")
+    # message = update.effective_message.text.split(" ")[1:]
+    # print(len(message)) 
+
+    # print(message)
+
+
 
 
 async def get_token_balance(update:Update, context:CallbackContext) :

@@ -34,6 +34,7 @@ async def add_user_wallet(data: User_Wallet):
         ``Bool`` : True is key added successfully else false"""
     #pass secret to create wallet from secret else new walelt is created
     wallet_gen = Wallet().create_wallet(data.secret)
+    #Generate next wallet name
     try:
         wallets = await get_wallets(data.tg_id)
         last_wallet = wallets[-1]

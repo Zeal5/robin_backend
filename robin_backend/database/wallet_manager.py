@@ -2,7 +2,7 @@ from .models import Users, Wallets, ActiveWallets
 from . import Session
 from sqlalchemy.future import select
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy import insert, select, exists
+from sqlalchemy import insert, exists, update
 import functools
 
 
@@ -64,7 +64,9 @@ async def check_wallet_exists_for_user(_id: int, secret: str) -> dict:
                 return {"error": e}
 
 
-async def add_user_and_keys(tg_id: int, secret: str, address: str,wallet_name:str) -> bool | dict:
+async def add_user_and_keys(
+    tg_id: int, secret: str, address: str, wallet_name: str
+) -> bool | dict:
     """Add user, wallets to the database.
 
     Args:
@@ -79,14 +81,18 @@ async def add_user_and_keys(tg_id: int, secret: str, address: str,wallet_name:st
         async with s.begin():
             try:
                 new_user = Users(tg_id=tg_id)
-                new_wallet = Wallets(user=new_user, secret=secret, address=address,name=wallet_name)
+                new_wallet = Wallets(
+                    user=new_user, secret=secret, address=address, name=wallet_name
+                )
                 s.add(new_user)
                 s.add(new_wallet)
                 await s.flush()
                 print(f"new user = {new_user.id}")
                 print(f"new_wallet = {new_wallet.id}")
                 Users
-                new_active_wallet = ActiveWallets(user_id=new_user.id, wallet_id=new_wallet.id)
+                new_active_wallet = ActiveWallets(
+                    user_id=new_user.id, wallet_id=new_wallet.id
+                )
                 s.add(new_active_wallet)
                 await s.commit()
                 return True
@@ -95,7 +101,9 @@ async def add_user_and_keys(tg_id: int, secret: str, address: str,wallet_name:st
 
 
 @get_wallets_count
-async def add_keys_when_user(tg_id: int, secret: str, address: str, wallet_name:str) -> bool | dict:
+async def add_keys_when_user(
+    tg_id: int, secret: str, address: str, wallet_name: str
+) -> bool | dict:
     async with Session() as s:
         async with s.begin():
             try:
@@ -104,23 +112,68 @@ async def add_keys_when_user(tg_id: int, secret: str, address: str, wallet_name:
                 )
                 user_id = existing_user.scalars().one().id
                 # user = existing_user.scalar_one()
-                wallet = Wallets(user_id=user_id, secret=secret, address=address,name = wallet_name)
+                wallet = Wallets(
+                    user_id=user_id, secret=secret, address=address, name=wallet_name
+                )
                 s.add(wallet)
                 await s.commit()
                 return True
             except Exception as e:
                 return {"error": e}
 
-#@TODO add check if user/wallet doesn't exist revert
-async def get_wallets(tg_id: int):
+
+# @TODO add check if user/wallet doesn't exist revert
+async def get_wallets(tg_id: int) -> list:
+    """takes in tg_id of any user and returns the list \n
+    of all the wallets orderd by wallet name\n
+    (default wallet names are wallet1,wallet2...)\n
+    `args:`
+        `tg_id:` user tg_id int
+    `Returns:`
+        List of wallet objects
+    """
+
     user_pk = await _check_user_exists(tg_id)
     async with Session() as s:
         async with s.begin():
             try:
                 user_wallets = await s.execute(
-                    select(Wallets).where(Wallets.user_id == user_pk).order_by(Wallets.name)
+                    select(Wallets)
+                    .where(Wallets.user_id == user_pk)
+                    .order_by(Wallets.name)
                 )
                 return user_wallets.scalars().all()
+            except Exception as e:
+                raise e
+
+
+async def get_active_wallet(tg_id: str) -> int:
+    user_pk = await _check_user_exists(tg_id)
+    async with Session() as s:
+        async with s.begin():
+            try:
+                user_wallets = await s.execute(
+                    select(ActiveWallets).filter(ActiveWallets.user_id == user_pk)
+                )
+                return user_wallets.scalar_one().wallet_id
+
+            except Exception as e:
+                raise e
+
+
+async def change_active_wallet(tg_id: int, active_wallet_id: int) -> bool:
+    user_pk = await _check_user_exists(tg_id)
+    async with Session() as s:
+        async with s.begin():
+            try:
+                stmt = (
+                    update(ActiveWallets)
+                    .where(ActiveWallets.user_id == user_pk)
+                    .values(wallet_id=active_wallet_id)
+                )
+                await s.execute(stmt)
+                await s.commit()
+                return True
             except Exception as e:
                 raise e
 

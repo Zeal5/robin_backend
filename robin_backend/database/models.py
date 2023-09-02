@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, String, ForeignKey, Boolean, BIGINT
+from sqlalchemy import Column, DateTime, String, ForeignKey, Boolean, BIGINT, Integer
 from sqlalchemy.orm import (
     relationship,
     DeclarativeBase,
@@ -25,6 +25,7 @@ class Users(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     tg_id: Mapped[int] = mapped_column(nullable=False, index=True, unique=True)
     wallets = relationship("Wallets", back_populates="user")
+    active_wallet = relationship("ActiveWallets", back_populates="user", uselist=False)
 
 
 # Define the Keys table
@@ -45,3 +46,13 @@ class Wallets(Base):
     address: Mapped[str] = mapped_column(String, nullable=False)
     name: Mapped[Optional[str]] = mapped_column(String)
     user = relationship("Users", back_populates="wallets")
+    active_wallet = relationship("ActiveWallets", back_populates="wallet", uselist=False)
+
+
+
+class ActiveWallets(Base):
+    __tablename__ = "active_wallet"
+    user_id: Mapped[int] = Column(Integer, ForeignKey("user.id"), primary_key=True)
+    wallet_id: Mapped[int] = Column(Integer, ForeignKey("wallet.id"), primary_key=True)
+    user = relationship("Users", back_populates="active_wallet")
+    wallet = relationship("Wallets", back_populates="active_wallet")

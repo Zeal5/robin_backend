@@ -157,4 +157,5 @@ buy_tokens_with_eth_convo_handler = ConversationHandler(
         MessageHandler(filters.ALL, fall_back),
         MessageHandler(filters.Command, fall_back),
     ],
+    conversation_timeout= 60*7
 )

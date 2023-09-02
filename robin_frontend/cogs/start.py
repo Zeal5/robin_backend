@@ -40,11 +40,16 @@ async def get_wallets(tg_id: int):
     response = requests.post(
         configs["backend_url_get_wallets"], json=data, headers=headers
     )
-    return response.json()
+    print(f"got response {response.status_code} - {response.text}")
+    return response
 
 
 async def got_keys(update: Update, context: CallbackContext) -> int:
     response = "private key and recovery phrase can not start with /"
+
+    if (update.effective_message.text).startswith("/"):
+        return ConversationHandler.END
+
     if not (update.effective_message.text).startswith("/"):
         response = await create_new_wallet(
             update.effective_user.id, update.effective_message.text
@@ -88,11 +93,16 @@ async def button_click(update: Update, context: CallbackContext) -> int:
         return ADD_SECRET
     if button_choice == "get_wallets":
         response = await get_wallets(update.effective_user.id)
-        wallets = ""
-        for k, v in enumerate(response.values(), 1):
-            wallets += f"{k} : {v} \n"
+        if response.status_code == 200:
+            wallets = ""
+            for k, v in enumerate(response.json().values(), 1):
+                wallets += f"{k} : {v} \n"
 
-        await context.bot.send_message(update.effective_chat.id, wallets)
+            await context.bot.send_message(update.effective_chat.id, wallets)
+        elif response.status_code == 400:
+            await context.bot.send_message(update.effective_chat.id,f"*No wallets found*\nTo create new wallet use `/start`", parse_mode="Markdown")
+        else:
+            await context.bot.send_message(update.effective_chat.id,f"Something went wrong", parse_mode="Markdown")
         return ConversationHandler.END
 
 
@@ -141,4 +151,5 @@ conv_handler = ConversationHandler(
     # per_chat=True,
     # per_user=True,
     # per_message=True,
+    ,conversation_timeout=7*60
 )

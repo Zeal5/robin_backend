@@ -6,6 +6,9 @@ import time
 
 import json
 
+with open("config.json") as f:
+    config = json.load(f)
+
 # @TODO add router address in config
 
 router_address = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
@@ -16,8 +19,6 @@ dai_address = "0x6B175474E89094C44Da98b954EedeAC495271d0F"
 class Token:
     """Buy token after analyzing metrics (decimals, eth_balance, check_sum)"""
 
-    web3_provider_url = "http://127.0.0.1:8545"
-
     def __init__(
         self,
         token_address_for_info: str = None,
@@ -26,36 +27,45 @@ class Token:
         token_to_buy: str = None,
         token_to_sell: str = None,
     ) -> None:
-        self.web3 = Web3(Web3.HTTPProvider(Token.web3_provider_url))
+        self.web3 = Web3(Web3.HTTPProvider(config["web3_provider_url"]))
         # print(f"is connected : {self.web3.is_connected()}")
         self.buyer_address = buyer_address
         self.token_address_for_info = token_address_for_info
         self.buyer_secret = buyer_secret
         self.token_to_buy = token_to_buy
         self.token_to_sell = token_to_sell
+        self.has_faulty_address = False
 
         if buyer_address is not None and not self.web3.is_checksum_address(
             buyer_address
         ):
-            self.buyer_address = self.web3.to_checksum_address(buyer_address)
+            self.buyer_address =  self._convert_to_checksum(buyer_address)
 
         if token_address_for_info is not None and not self.web3.is_checksum_address(
             token_address_for_info
         ):
-            self.token_address_for_info = self.web3.to_checksum_address(
+            self.token_address_for_info = self._convert_to_checksum(
                 token_address_for_info
             )
 
         if token_to_buy is not None and not self.web3.is_checksum_address(token_to_buy):
-            self.token_to_buy = self.web3.to_checksum_address(token_to_buy)
+            self.token_to_buy = self._convert_to_checksum(token_to_buy)
 
         if token_to_sell is not None and not self.web3.is_checksum_address(
             token_to_sell
         ):
-            self.token_to_sell = self.web3.to_checksum_address(token_to_sell)
+            self.token_to_sell = self._convert_to_checksum(token_to_sell)
 
         # @TODO this is set to default account for testing only
         self.account = self.web3.eth.default_account = self.buyer_address
+       
+
+    def _convert_to_checksum(self, _address: str):
+        try:
+            self.web3.to_checksum_address(_address)
+        except Exception as e:
+            self.has_faulty_address = True
+            raise e
 
     # @TODO update decimals and other info related to token to db(create a class lvl dict to hold that info?) to reduce the calls made to rpc
     async def _get_decimals(self, _token: str = None) -> int:
@@ -112,19 +122,19 @@ class Token:
         token_contract = self.web3.eth.contract(_token_to_approve, abi=ERC20_token_abi)
         try:
             approve_txn = token_contract.functions.approve(
-            router_address,
-            amount_to_approve
-            * 10 ** (await self._get_decimals(_token=_token_to_approve)),
+                router_address,
+                amount_to_approve
+                * 10 ** (await self._get_decimals(_token=_token_to_approve)),
             ).build_transaction(
-            {
-                "from": self.buyer_address,
-                "gasPrice": self.web3.eth.gas_price,
-                "nonce": self.web3.eth.get_transaction_count(self.buyer_address),
-            }
-        )
+                {
+                    "from": self.buyer_address,
+                    "gasPrice": self.web3.eth.gas_price,
+                    "nonce": self.web3.eth.get_transaction_count(self.buyer_address),
+                }
+            )
         except ContractLogicError as e:
-            return {"error": e}
-            
+            raise e
+
         print(approve_txn)
         signed_approve_txn = self.web3.eth.account.sign_transaction(
             approve_txn, private_key=self.buyer_secret
@@ -150,11 +160,9 @@ class Token:
 
         path = [token_in_address, token_out_address]
         if token_out_address == token_in_address:
-            return [1*10**18,1*10**18], path
+            return [1 * 10**18, 1 * 10**18], path
         contract = await self._get_router_contract()
-        amounts_out = contract.functions.getAmountsOut(
-            int(amount_in), path
-        ).call()
+        amounts_out = contract.functions.getAmountsOut(int(amount_in), path).call()
         print(amounts_out)
         print(
             f"amount out {token_in_address} -> {token_out_address}\n{amounts_out[0] / (10**(await self._get_decimals(_token = path[0])))} - {amounts_out[1] / (10**(await self._get_decimals(_token = path[1])))}"
@@ -203,7 +211,7 @@ class Token:
                     }
                 )
             except ContractLogicError as e:
-                return {"error": e}
+                raise e
 
             signed_approve_txn = self.web3.eth.account.sign_transaction(
                 buy_token, private_key=self.buyer_secret
@@ -229,7 +237,7 @@ class Token:
     async def swap_eth_for_tokens(self, eth_to_spend: int):
         eth_balance = await self._get_eth_balance()
         print(self.buyer_address)
-        if eth_balance >= eth_to_spend:
+        if  eth_balance >= eth_to_spend:
             print(f"ethbalance = {eth_balance}")
             contract = await self._get_router_contract()
             amounts_out, path = await self._get_amounts_out(
@@ -249,7 +257,7 @@ class Token:
                     }
                 )
             except ContractLogicError as e:
-                return {"error": e}
+                raise e
 
             signed_approve_txn = self.web3.eth.account.sign_transaction(
                 buy_token, private_key=self.buyer_secret
@@ -281,7 +289,7 @@ class Token:
             print(
                 f"token balance = {token_balance *10** await self._get_decimals(self.token_to_sell)}"
             )
-            await self._approve_tokens(token_to_spend,dai_address)
+            await self._approve_tokens(token_to_spend, dai_address)
             contract = await self._get_router_contract()
             amounts_out, path = await self._get_amounts_out(
                 token_to_spend,
@@ -290,11 +298,11 @@ class Token:
             print(amounts_out, path)
             try:
                 buy_token = contract.functions.swapTokensForExactETH(
-                    amounts_out[1] - 1*10**17,
+                    amounts_out[1] - 1 * 10**17,
                     amounts_out[0],
                     path,
                     self.buyer_address,
-                    int(time.time() +10)
+                    int(time.time() + 10),
                 ).build_transaction(
                     {
                         "from": self.buyer_address,
@@ -305,7 +313,7 @@ class Token:
                     }
                 )
             except ContractLogicError as e:
-                return {"error": e}
+                raise e
 
             signed_approve_txn = self.web3.eth.account.sign_transaction(
                 buy_token, private_key=self.buyer_secret
@@ -323,8 +331,6 @@ class Token:
                 "from": tx["from"],
                 "to": tx["to"],
             }
-
-
 
         else:
             return {

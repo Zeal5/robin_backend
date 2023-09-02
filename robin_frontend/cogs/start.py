@@ -122,9 +122,13 @@ async def start_command(update: Update, context: CallbackContext) -> int:
 
 
 async def fall_back(update: Update, context: CallbackContext):
-    await update.message.reply_text("You have to click one of the buttons!")
     # Call the start command handler to show the buttons again
     # await start_command(update, context)
+    command = update.message.text[1:]
+    if command == "start":
+        await start_command(update,context)
+        return ConversationHandler.END
+
     return ConversationHandler.END
 
 conv_handler = ConversationHandler(
@@ -133,7 +137,7 @@ conv_handler = ConversationHandler(
         SHOW_BUTTONS: [CallbackQueryHandler(button_click)],
         ADD_SECRET: [MessageHandler(filters.TEXT, got_keys)],
     },
-    fallbacks=[MessageHandler(filters.ALL, fall_back)]
+    fallbacks=[MessageHandler(filters.ALL, fall_back),MessageHandler(filters.Command,fall_back)]
     # per_chat=True,
     # per_user=True,
     # per_message=True,

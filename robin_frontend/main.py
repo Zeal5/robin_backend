@@ -16,23 +16,29 @@ from telegram.ext import (
 
 # import custom pakages
 from cogs.start import start_command, got_keys, conv_handler
-from cogs.swap_tokens import swap_token, get_token_balance
+from cogs.buy_tokens_with_eth import buy_tokens_with_eth_convo_handler
 load_dotenv()
 token = os.getenv("TOKEN")
+
+
 
 
 def main():
     print("bot started")
     app = Application.builder().token(token).build()
-    app.add_handler(conv_handler)
-    app.add_handler(CommandHandler("swap", swap_token))
-    app.add_handler(CommandHandler("token_balance",get_token_balance))
+    # conv_handler.fallbacks.append(CommandHandler('something', command_handler))
+    app.add_handler(conv_handler,1)
+    app.add_handler(buy_tokens_with_eth_convo_handler,2)
+    # app.add_handler(CommandHandler("token_balance",get_token_balance),2)
+    # app.add_handler(MessageHandler(filters.Command,command_handler))
+
+
     # polling
     app.run_polling(3, allowed_updates=Update.ALL_TYPES)
 
 """
 start - startr setup
-swap - swap 1 token for another
+buy_tokens_with_eth - token address , amount eth
 token_balance - get token balance
 
 """

@@ -125,12 +125,13 @@ async def got_keys(update: Update, context: CallbackContext) -> int:
         chat_id=update.effective_chat.id, message_id=intermediate_message_id
     )
     print(update.effective_chat.id)
-    await context.bot.send_message(update.effective_chat.id, response)
+    await context.bot.send_message(update.effective_chat.id, response['detail'])
     # await context.bot.send_message(update.message.chat_id,update.callback_query.message)
     return ConversationHandler.END
 
 
 async def button_click(update: Update, context: CallbackContext) -> int:
+    print("button clicked")
     query = update.callback_query
     button_choice = query.data
     print(query.from_user.id)
@@ -162,8 +163,9 @@ async def button_click(update: Update, context: CallbackContext) -> int:
         return EDIT_BUTTONS
 
 
-async def start_command(update: Update, context: CallbackContext) -> int:
+async def enter_wallet_manager(update: Update , context: CallbackContext) -> int:
     # Create the two buttons
+    print("in enter wallet manager")
     button1 = InlineKeyboardButton("Create New Wallet", callback_data="create_wallet")
     button2 = InlineKeyboardButton("Add Wallet", callback_data="add_wallet")
     button3 = InlineKeyboardButton("Get Wallets", callback_data="get_wallets")
@@ -181,23 +183,25 @@ async def start_command(update: Update, context: CallbackContext) -> int:
 
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    await update.message.reply_text("Welcome", reply_markup=reply_markup)
+    await context.bot.send_message(update.effective_chat.id,"wallet manager", reply_markup=reply_markup)
     return SHOW_BUTTONS
 
 
 async def fall_back(update: Update, context: CallbackContext):
     # Call the start command handler to show the buttons again
     # await start_command(update, context)
+    print("wallet manager fallback")
     command = update.message.text[1:]
-    if command == "start":
-        await start_command(update, context)
+    if command == "manage_wallets":
+        await enter_wallet_manager(update, context)
         return ConversationHandler.END
-
+    print("ending wallet manager convo")
     return ConversationHandler.END
 
 
-conv_handler = ConversationHandler(
-    entry_points=[CommandHandler("start", start_command)],
+wallet_manager_convo_handler = ConversationHandler(
+    entry_points=[CommandHandler("manage_wallets", enter_wallet_manager),
+                  CallbackQueryHandler(enter_wallet_manager,pattern="wallet_manager")],
     states={
         SHOW_BUTTONS: [CallbackQueryHandler(button_click)],
         ADD_SECRET: [MessageHandler(filters.TEXT, got_keys)],

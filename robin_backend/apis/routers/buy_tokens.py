@@ -62,7 +62,7 @@ async def buy_tokens_with_eth(data: TokenForSwap):
         )  # data.token_to_buy)
     except ValueError as value_error:
         exception = str(value_error).split("'")[1]
-        raise HTTPException(status_code=400, detail=f"{exception} addresses is invalid")
+        raise HTTPException(status_code=400, detail=f"address ({exception}) is invalid")
     except Exception as e:
         print(e)
         return {'error': e}  # HTTPException(status_code=400, detail="one of the addresses is invalid")

@@ -155,7 +155,7 @@ buy_tokens_with_eth_convo_handler = ConversationHandler(
     states={WAIT_FOR_TOKEN: [MessageHandler(filters.TEXT, when_token_is_enterd)]},
     fallbacks=[
         MessageHandler(filters.ALL, fall_back),
-        MessageHandler(filters.Command, fall_back),
+        MessageHandler(filters.COMMAND, fall_back),
     ],
     conversation_timeout= 60*7
 )

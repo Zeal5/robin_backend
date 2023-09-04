@@ -277,7 +277,7 @@ class Token:
             }
         else:
             return {
-                "error": f"eth balance ({eth_balance}) is less then {eth_to_spend} "
+                "detail": f"eth balance ({eth_balance}) is less then {eth_to_spend} "
             }
 
     async def swap_tokens_for_eth(self, token_to_spend: str):

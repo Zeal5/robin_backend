@@ -66,7 +66,11 @@ async def when_token_is_enterd(
     print(f"printing response {response.json()}")
     if response.status_code == 200:
         response = response.json()
-        reply = f"""
+        # handle error in case returned with an error of less balance
+        if response.get('detail'):
+            reply = f"{response['detail']}"
+        else:
+            reply = f"""
         [TXN HASH](https://etherscan.io/tx/{response['hash']})\n`{response['hash']}`\n\n*From:*\n`{response['from']}`\n\n*To:*\n`{response['to']}`\n\n*Nonce:*\n{response['nonce']}"""
         await update.message.reply_text(reply, parse_mode="Markdown")
     elif response.status_code == 400:

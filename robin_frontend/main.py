@@ -43,7 +43,7 @@ main_menu - Main menu for bot
 manage_wallets - create new wallet, add wallet, check all wallets
 buy_tokens_with_eth - token address , amount eth
 token_balance - get token balance
-
+change_wallet - change active wallet
 """
 
 

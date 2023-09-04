@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from database.wallet_manager import get_wallets, get_active_wallet, change_active_wallet
+from database.wallet_manager import get_wallets, get_active_wallets_id, change_active_wallet
 from fastapi.responses import JSONResponse
 router = APIRouter()
 
@@ -14,7 +14,7 @@ class User(BaseModel):
 async def get_user_wallet(data: User):
     try:
         wallets = await get_wallets(data.tg_id)
-        active_wallet_id = await get_active_wallet(data.tg_id)
+        active_wallet_id = await get_active_wallets_id(data.tg_id)
         print(wallets)
         # wallets_dict = [{"id": i.id, "wallet_address": f"{i.address}", "wallet_name":i.name} for i in wallets]
         wallets_dict = []

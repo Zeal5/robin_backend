@@ -147,7 +147,7 @@ async def get_wallets(tg_id: int) -> list:
                 raise e
 
 
-async def get_active_wallet(tg_id: str) -> int:
+async def get_active_wallets_id(tg_id: str) -> int:
     user_pk = await _check_user_exists(tg_id)
     async with Session() as s:
         async with s.begin():
@@ -159,6 +159,20 @@ async def get_active_wallet(tg_id: str) -> int:
 
             except Exception as e:
                 raise e
+async def get_active_wallet(tg_id:str) ->int:
+    try:
+        wallet_id = await get_active_wallets_id(tg_id)
+        print(f"wallet id{wallet_id}")
+        async with Session() as s:
+            async with s.begin():
+                user_wallet = await s.execute(
+                        select(Wallets).filter(Wallets.id == wallet_id)
+                    )
+                return user_wallet.scalars().first()
+        
+    except Exception as e:
+        raise e
+    
 
 
 async def change_active_wallet(tg_id: int, active_wallet_id: int) -> bool:

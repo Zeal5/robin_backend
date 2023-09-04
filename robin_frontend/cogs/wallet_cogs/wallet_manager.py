@@ -72,7 +72,7 @@ async def show_buttons(update: Update, context: CallbackContext):
     elif response.status_code == 400:
         await context.bot.send_message(
             update.effective_chat.id,
-            f"*No wallets found*\nTo create new wallet use `/start`",
+            f"*No wallets found*\nTo create new wallet use `/manage_wallets`",
             parse_mode="Markdown",
         )
     else:

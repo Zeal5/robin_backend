@@ -4,7 +4,7 @@ import json
 from .helpers.formate_balance import format_number
 from .helpers.address_checker import Swap
 
-from database.wallet_manager import get_wallets
+from database.wallet_manager import get_active_wallet
 from on_chain.buy import Token
 
 router = APIRouter()
@@ -53,13 +53,18 @@ async def swap_tokens(data: TokenForSwap):
 # @TODO change function later to implement actual buy sell
 @router.post("/buy_tokens_with_eth")
 async def buy_tokens_with_eth(data: TokenForSwap):
+    try:
+        active_wallet = await get_active_wallet(data.tg_id)
+        print(f"""name {active_wallet.name}\nuser id {active_wallet.user_id} address {active_wallet.address}\nsecret {active_wallet.secret}\n""")
+    except Exception as e:
+        raise HTTPException(status_code=400,detail=f"No Wallets found")
 
     try:
         buy = Swap(
             token_to_buy=data.token_to_buy,
-            buyer_address="0x136be469A3203D20a853a546Af89867AE4B437b9",
-            buyer_secret="0xc55c8750c851c723e36485856c96760f33efb7b3b281e9a0ecf674f3070f0939",
-        )  # data.token_to_buy)
+            buyer_address=active_wallet.address,
+            buyer_secret=active_wallet.secret,
+        )  
     except ValueError as value_error:
         exception = str(value_error).split("'")[1]
         raise HTTPException(status_code=400, detail=f"address ({exception}) is invalid")
@@ -74,35 +79,13 @@ async def buy_tokens_with_eth(data: TokenForSwap):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"'error' : {e}")
     print(f"buying => {buying}")
+    if buying.get('detail'):
+        err = buying['detail']
+        buying['detail'] = err + f"\nFor {active_wallet.name} ({active_wallet.address})\nto change active wallet use `/manage_wallets`"
     return buying
 
     #@TODO return eth balance and token amount balance too
 
-    # print(f"type of tg_id {type(data.tg_id)}")
-    # print(f"type of buy token {type(data.token_to_buy)}")
-    # print(f"type of sell token {type(data.token_to_sell)}")
-    # print(f"type of eth to spend {type(data.eth_to_spend)}")
-    # print(f"type of amount to sell {type(data.amount_to_sell)}")
-    # print(f"type of slippage {type(data.slippage)}")
-
-    # wallet = await get_wallets(data.tg_id)
-
-    # key = wallet[0]
-    # print(key.address)
-    # address = Token(buyer_address="0x136be469A3203D20a853a546Af89867AE4B437b9",
-    #                 buyer_secret="0xc55c8750c851c723e36485856c96760f33efb7b3b281e9a0ecf674f3070f0939",
-    #                 token_to_sell=dai_address,
-    #                 token_to_buy=usdt,
-    #                 )
-
-    # balance = await address.swap_tokens_for_eth(1731.17)
-
-    # balance = await address.swap_tokens_for_tokens(100)
-    # balance = await address.swap_eth_for_tokens(0.1)
-    # balance = await address.swap_tokens_for_eth(800000)
-
-    # print(balance)
-    # return (balance)
 
 
 @router.post("/swap")

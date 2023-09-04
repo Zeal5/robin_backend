@@ -26,7 +26,7 @@ class Users(Base):
     tg_id: Mapped[int] = mapped_column(nullable=False, index=True, unique=True)
     wallets = relationship("Wallets", back_populates="user")
     active_wallet = relationship("ActiveWallets", back_populates="user", uselist=False)
-
+    settings = relationship("UserSettings",back_populates="user", uselist=False)
 
 # Define the Keys table
 """
@@ -37,6 +37,11 @@ kay_value,
 user (foreign key)
 """
 
+class UserSettings(Base):
+    __tablename__ = "user_settings"
+    id:Mapped[int] = mapped_column(primary_key=True)
+    user_id:Mapped[int] = Column(int,ForeignKey('user.id'))
+    user = relationship("Users",back_populates="settings")
 
 class Wallets(Base):
     __tablename__ = "wallet"

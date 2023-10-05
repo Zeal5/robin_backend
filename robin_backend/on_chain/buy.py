@@ -1,4 +1,3 @@
-import asyncio
 from web3 import Web3
 from . import token_abi as ERC20_token_abi, uniswap_router_abi
 from web3.exceptions import ContractLogicError

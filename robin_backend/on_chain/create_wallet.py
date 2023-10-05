@@ -18,17 +18,23 @@ class Wallet:
             try:
                 account = Account.from_mnemonic(private_key, f"m/44'/60'/0'/0")
             except Exception as e:
-                return {"error": e}
+                raise e
         elif private_key.startswith("0x"):
             # ("0xkey")
             private_key = private_key[2:]
-            account = Account.from_key(private_key)
+            try:
+                account = Account.from_key(private_key)
+            except Exception as e:
+                raise e
         elif len(private_key) == 64:
             # ("64 len")
             account = Account.from_key(private_key)
 
         if not account:
             return False
+        
+        # for a in account:
+        print(f"acccccount    =  ==> {account.__doc__}")
 
         return {
             "address": account.address or "",

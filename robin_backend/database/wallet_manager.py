@@ -1,10 +1,11 @@
-from .models import Users, Wallets, ActiveWallets
+from .models import Users, Wallets, ActiveWallets, UserSettings
 from . import Session
 from sqlalchemy.future import select
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import insert, exists, update
+from sqlalchemy.orm import joinedload
 import functools
-
+from typing import Union
 
 # test wrapper afterwards
 def get_wallets_count(func):
@@ -17,19 +18,20 @@ def get_wallets_count(func):
             print("keys less then 7")
             return await func(tg_id, *args, **kwargs)
         else:
-            return "Max 7 wallets are allowed"
+            print("keys more then 7")
+            return {"detail":"Max 7 wallets are allowed"}
 
     return wraped
 
 
-async def _check_user_exists(_id: int) -> int | dict:
+async def _check_user_exists(_id: int) ->  Union[bool,int]:
     """Checks if user with tg_id exists in database
 
     Args:
         ``tg_id``: The Telegram ID of user
 
     Returns:
-        ``bool`` : True if user with tg_id exists
+        ``bool`` : user pk if user with tg_id exists else False
     """
     async with Session() as s:
         async with s.begin():
@@ -37,12 +39,15 @@ async def _check_user_exists(_id: int) -> int | dict:
                 users = await s.execute(select(Users).filter(Users.tg_id == _id))
                 return users.scalar_one().id
             except NoResultFound as e:
-                raise e
-
+                return False
 
 async def check_wallet_exists_for_user(_id: int, secret: str) -> dict:
+    if not secret.startswith('0x'):
+        secret = '0x' + secret
     return_dict = {"user": False, "wallet": False}
     user_id: int = await _check_user_exists(_id)
+    if not user_id:
+        return return_dict
     async with Session() as session:
         async with session.begin():
             try:
@@ -76,7 +81,7 @@ async def add_user_and_keys(
     Returns:
         ``Bool``: True if user and wallet was added successfully.
     """
-
+    print("running add user and keys?")
     async with Session() as s:
         async with s.begin():
             try:
@@ -93,12 +98,13 @@ async def add_user_and_keys(
                 new_active_wallet = ActiveWallets(
                     user_id=new_user.id, wallet_id=new_wallet.id
                 )
+                settings = UserSettings(slippage = 9, user_id = new_user.id)
                 s.add(new_active_wallet)
+                s.add(settings)
                 await s.commit()
                 return True
             except Exception as e:
                 raise e
-
 
 @get_wallets_count
 async def add_keys_when_user(
@@ -119,7 +125,7 @@ async def add_keys_when_user(
                 await s.commit()
                 return True
             except Exception as e:
-                return {"error": e}
+                return str(e)
 
 
 # @TODO add check if user/wallet doesn't exist revert
@@ -134,6 +140,7 @@ async def get_wallets(tg_id: int) -> list:
     """
 
     user_pk = await _check_user_exists(tg_id)
+    print(f"user pk = {user_pk}")
     async with Session() as s:
         async with s.begin():
             try:
@@ -159,6 +166,20 @@ async def get_active_wallets_id(tg_id: str) -> int:
 
             except Exception as e:
                 raise e
+            
+async def get_slippage(user_id:int)->int :
+    """takes in foreign key reference(not the tg_id) from user table and returns sliippage"""
+    async with Session() as s:
+        async with s.begin():
+            try:
+                user_wallets = await s.execute(
+                    select(UserSettings).filter(UserSettings.user_id == user_id)
+                )
+                return user_wallets.scalar_one().slippage
+
+            except Exception as e:
+                raise e
+
 async def get_active_wallet(tg_id:str) ->int:
     try:
         wallet_id = await get_active_wallets_id(tg_id)
@@ -177,6 +198,7 @@ async def get_active_wallet(tg_id:str) ->int:
 
 async def change_active_wallet(tg_id: int, active_wallet_id: int) -> bool:
     user_pk = await _check_user_exists(tg_id)
+    print(f"user pk = {user_pk}")
     async with Session() as s:
         async with s.begin():
             try:
@@ -191,6 +213,25 @@ async def change_active_wallet(tg_id: int, active_wallet_id: int) -> bool:
             except Exception as e:
                 raise e
 
+async def test(tg_id:int) :
+    # user_pk = await _check_user_exists(tg_id)
+    # print(f"user pk = {user_pk}")
+    async with Session() as s:
+        async with s.begin():
+            try:
+                # x = await s.execute(select(UserSettings).where(UserSettings.user_id == user_pk))
+                # print(x)
+                # y = x.scalars().first()
+                
+                # print(y.slippage)
+                user_settings = await s.execute(select(Users).options(joinedload(Users.settings)).filter(Users.tg_id == tg_id))
+                settings =  user_settings.scalars().first().settings
 
+                # z =  x.settings
+                return settings
+            except Exception as e:
+                print(str(e))
+
+                
 """connect amazing charge pottery demand alien current churn critic pistol crack debate"""
 """dcda4dc6f971dd612f8c06ee4061f1db36992aa8edbc44737ecc9dee1212a9de"""

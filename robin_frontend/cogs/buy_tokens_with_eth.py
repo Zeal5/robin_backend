@@ -26,17 +26,11 @@ async def make_req_to_server(
     slippage: int | None = None,
 ) -> dict:
     headers = {"Content-Type": "application/json"}
-    data = {
-        "tg_id": tg_id,
-        "eth_to_spend": eth_to_spend,
-        "token_to_buy": token_to_buy,
-        "token_to_sell": token_to_sell,
-        "eth_to_spend": eth_to_spend,
-        "amount_to_sell": amount_to_sell,
-        "slippage": slippage,
-    }
-    print(eth_to_spend)
+    eth_to_spend = float(eth_to_spend)
+    print(f"make re qeth amount = {eth_to_spend}")
     print(type(eth_to_spend))
+    data = {"tg_id": tg_id,"eth_to_spend": eth_to_spend, "token_to_buy": token_to_buy,"token_to_sell": token_to_sell,"amount_to_sell": amount_to_sell,"slippage": slippage}
+    print(type(data['eth_to_spend']))
 
     request = requests.post(url, json=data, headers=headers)
 
@@ -52,22 +46,25 @@ async def when_token_is_enterd(
         message = update.message.text.strip().split()
     print(f"raw message {message}")
     token_address, amount = await disect_message(update, message)
-    if token_address == False and amount == False:
-        kill = await fall_back(update, context, 1)
-        if kill:
-            return ConversationHandler.END
-    print(f"{token_address} - {amount}")
+    #@ TODO delete the you forgot to enter token address message on next iteration
+    if token_address == False or amount == False:
+        await update.message.reply_text(f"you forgot to enter token address or amount ")
+        return WAIT_FOR_TOKEN
+        # kill = await fall_back(update, context, 1)
+        # if kill:
+        #     return ConversationHandler.END
+    print(f"{token_address} - {float(amount)}")
     response = await make_req_to_server(
         tg_id=update.effective_user.id,
         url=configs["backend_url_buy_tokens_with_eth"],
         token_to_buy=token_address,
         eth_to_spend=amount,
     )
-    print(f"printing response {response.json()}")
+    print(f"printing response {response} -> {response.json()}")
     if response.status_code == 200:
         response = response.json()
         # handle error in case returned with an error of less balance
-        if response.get('detail'):
+        if response.get("detail"):
             reply = f"{response['detail']}"
         else:
             reply = f"""
@@ -77,18 +74,20 @@ async def when_token_is_enterd(
         print(response)
         await update.message.reply_text(response.json()["detail"])
     elif response.status_code == 422:
-        print(response.json()["detail"][0]["loc"])
+        print(f"422 code -> {response.json()['detail'][0]['loc']}")
         wrong_input = ""
         if "eth_to_spend" in response.json()["detail"][0]["loc"]:
             wrong_input = "eth amount"
             await update.message.reply_text(f"{wrong_input} must be a number")
             return ConversationHandler.END
-        if "token_to_buy" in response.json()["detail"][0]["loc"]:
+        elif "token_to_buy" in response.json()["detail"][0]["loc"]:
             wrong_input = "token address"
             await update.message.reply_text(
                 f"{wrong_input} must be a hexadecimal address"
             )
             return ConversationHandler.END
+        
+        
     # @TODO add custom error codes for different situations (400 means server will not process request bcz of client error
     return ConversationHandler.END
 
@@ -132,7 +131,7 @@ async def buy_tokens_with_eth(update: Update, context: CallbackContext) -> None:
         if len(message) == 1:
             await update.message.reply_text("enter addrress and amount")
             return WAIT_FOR_TOKEN
-        print(message)
+        print(f"message : {message}")
 
         await when_token_is_enterd(update, context, message)
         return ConversationHandler.END
@@ -161,5 +160,5 @@ buy_tokens_with_eth_convo_handler = ConversationHandler(
         MessageHandler(filters.ALL, fall_back),
         MessageHandler(filters.COMMAND, fall_back),
     ],
-    conversation_timeout= 60*7
+    conversation_timeout=60 * 7,
 )

@@ -6,7 +6,7 @@ from database.wallet_manager import (
     get_wallets
 )
 from on_chain.create_wallet import Wallet
-from fastapi import APIRouter
+from fastapi import APIRouter,HTTPException
 from typing import Optional, Union
 
 from pydantic import BaseModel
@@ -33,7 +33,15 @@ async def add_user_wallet(data: User_Wallet):
     Returns:
         ``Bool`` : True is key added successfully else false"""
     #pass secret to create wallet from secret else new walelt is created
-    wallet_gen = Wallet().create_wallet(data.secret)
+    try:
+        wallet_gen = Wallet().create_wallet(data.secret)
+    except Exception as e:
+        print('in wallet gen exception')
+        raise HTTPException(status_code=400,detail = f"error while creating wallet {e}")
+    print(f"wallet gen => {wallet_gen}")
+    # user_id = await _check_user_exists(data.tg_id)
+    # print(f"user id {user_id}")
+
     #Generate next wallet name
     try:
         wallets = await get_wallets(data.tg_id)
@@ -44,23 +52,31 @@ async def add_user_wallet(data: User_Wallet):
     except Exception as e:
         wallet_name = "Wallet 1"
 
-
+    print(data.tg_id)
+    print(data.secret)
     if wallet_gen:
         if isinstance(data.secret, str):  # create new wallet | old user
             wallet_and_user_exists = await check_wallet_exists_for_user(data.tg_id, data.secret)
+            print(f"wallet exists for user = {wallet_and_user_exists}")
 
             if wallet_and_user_exists["user"] and wallet_and_user_exists["wallet"]:
                 return {"detail": "wallet secret key already in use already exists"}
             elif wallet_and_user_exists["user"]:
+                print("adding useers")
                 added_keys = await add_keys_when_user(
                     data.tg_id, wallet_gen["secret"], wallet_gen["address"],wallet_name
                 )
+                if added_keys.get('detail'):
+                    return added_keys
+                
                 if added_keys:
+                    print("adding 2 diicts")
                     return {"wallet_name":wallet_name,**wallet_gen}
             else:
                 _add_user_and_keys = await add_user_and_keys(
                     data.tg_id, wallet_gen["secret"], wallet_gen["address"], wallet_name
                 )
+                print("running line 67")
                 if _add_user_and_keys:
                     return {"wallet_name":wallet_name,**wallet_gen}
 
@@ -68,20 +84,35 @@ async def add_user_wallet(data: User_Wallet):
             user_exists = await _check_user_exists(data.tg_id)
         except Exception as e:
             user_exists = "none"
-        if isinstance(user_exists, int):
+
+        print(f"user exists {user_exists}")
+        if user_exists is False:
+            _add_user_and_keys = await add_user_and_keys(
+            data.tg_id, wallet_gen["secret"], wallet_gen["address"],wallet_name
+        )
+            if _add_user_and_keys:
+                print("addeed users and keys")
+                return {"wallet_name":wallet_name,**wallet_gen}
+        
+        else:
+            print("user instance is int")
+           
             adding_user = await add_keys_when_user(
                 tg_id=data.tg_id,
                 secret=wallet_gen["secret"],
                 address=wallet_gen["address"],
                 wallet_name=wallet_name
             )
-            if adding_user:
+            print(f"adding user = {adding_user}")
+            
+            print(f'type = {type(adding_user)}')
+            if adding_user == True:
+                print("ok")
                 return {"wallet_name":wallet_name,**wallet_gen}
 
-        _add_user_and_keys = await add_user_and_keys(
-            data.tg_id, wallet_gen["secret"], wallet_gen["address"],wallet_name
-        )
-        if _add_user_and_keys:
-            return {"wallet_name":wallet_name,**wallet_gen}
+            else:
+                return {'detail':"Something went wrong"}
+
 
     return {"detail":"Invalid key"}
+

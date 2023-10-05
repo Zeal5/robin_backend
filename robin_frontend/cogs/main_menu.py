@@ -1,7 +1,7 @@
-from cogs.wallet_cogs.wallet_manager import (
-    wallet_manager_convo_handler,
-    enter_wallet_manager,
-)
+# from wallet_manager import (
+#     wallet_manager_convo_handler,
+#     enter_wallet_manager,
+# )
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram import Update
 from telegram.ext import (
@@ -13,7 +13,7 @@ from telegram.ext import (
     CallbackQueryHandler,
 )
 
-import requests, json
+# import requests, json
 
 WALLET_MANAGER, MENU_BUTTONS = range(2)
 
@@ -40,7 +40,7 @@ async def main_menu_interface(update: Update, context: CallbackContext):
     wallet_manager = InlineKeyboardButton(
         "\u2699 Wallet Manger", callback_data="wallet_manager"
     )
-    extra = InlineKeyboardButton("extra", callback_data="manager")
+    extra = InlineKeyboardButton("Settings", callback_data="enter_settings")
 
     keyboard = [[wallet_manager], [extra]]
 
@@ -66,6 +66,5 @@ main_menu_convo_handler = ConversationHandler(
     fallbacks=[
         MessageHandler(filters.ALL, fall_back),
         MessageHandler(filters.Command, fall_back),
-    ],
-    conversation_timeout=60 * 7,
+    ]
 )

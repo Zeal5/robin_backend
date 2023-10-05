@@ -1,7 +1,6 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 import requests
 from telegram.ext import (
-    Application,
     CallbackContext,
     CallbackQueryHandler,
     CommandHandler,
@@ -38,7 +37,8 @@ async def editing_wallets(update: Update, context: CallbackContext):
 
 async def show_buttons(update: Update, context: CallbackContext):
     response = await get_wallets(update.effective_user.id)
-    old_wallets_list_message = context.user_data.get("show_wallet_message_id")
+
+    old_wallets_list_message = context.user_data.get("show_wallet_message_id") or False
     if old_wallets_list_message:
         await context.bot.delete_message(
             chat_id=update.effective_chat.id, message_id=old_wallets_list_message
@@ -79,6 +79,7 @@ async def show_buttons(update: Update, context: CallbackContext):
         await context.bot.send_message(
             update.effective_chat.id, f"Something went wrong", parse_mode="Markdown"
         )
+    print("ending wallet manager convo")
     return ConversationHandler.END
 
 
@@ -125,7 +126,21 @@ async def got_keys(update: Update, context: CallbackContext) -> int:
         chat_id=update.effective_chat.id, message_id=intermediate_message_id
     )
     print(update.effective_chat.id)
-    await context.bot.send_message(update.effective_chat.id, response['detail'])
+    reply = (
+        f"*New Wallet Created*  test\n"
+        f"*{response.get('wallet_name')}*\n"
+        f"Address \n"
+        f"`{response.get('address')}`\n"
+        f"Private Key: "
+        f"`{response.get('secret')}`\n"
+    )
+
+    print(type(response))
+    if response.get("detail"):
+        reply = response["detail"]
+    await context.bot.send_message(
+        update.effective_chat.id, reply, parse_mode="Markdown"
+    )
     # await context.bot.send_message(update.message.chat_id,update.callback_query.message)
     return ConversationHandler.END
 
@@ -135,19 +150,43 @@ async def button_click(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
     button_choice = query.data
     print(query.from_user.id)
-
+    await context.bot.delete_message(
+        chat_id=update.effective_chat.id,
+        message_id=context.user_data["wallet_manager_buttons"],
+    )
     if button_choice == "create_wallet":
         intermediate_message = await context.bot.send_message(
             chat_id=update.effective_chat.id, text="creating new wallet..."
         )
-        intermediate_message_id = intermediate_message.id
-        request = await create_new_wallet(update.effective_user.id)
+        # intermediate_message_id = intermediate_message.id
+        response = await create_new_wallet(update.effective_user.id)
 
         # deleting intermediate message
         await context.bot.delete_message(
-            chat_id=update.effective_chat.id, message_id=intermediate_message_id
+            chat_id=update.effective_chat.id, message_id=intermediate_message.id
         )
-        await query.message.reply_text(f"{request}")
+
+        # reply = textwrap.dedent(
+        #     f"""*New Wallet Created*  test
+        #         *{response.get('wallet_name')}*
+        #         Address
+        #         `{response.get('address')}`
+        #         Private Key:
+        #         `{response.get('secret')}`
+        #                     """
+        # )
+        reply = (f"*New Wallet Created*  test\n"
+            f"*{response.get('wallet_name')}*\n"
+            f"Address \n"
+            f"`{response.get('address')}`\n"
+            f"Private Key: "
+            f"`{response.get('secret')}`\n"
+        )
+        print(type(response))
+        if response.get("detail"):
+            reply = response["detail"]
+
+        await query.message.reply_text(reply, parse_mode="Markdown")
         return ConversationHandler.END
 
     if button_choice == "add_wallet":
@@ -162,8 +201,10 @@ async def button_click(update: Update, context: CallbackContext) -> int:
         await show_buttons(update, context)
         return EDIT_BUTTONS
 
+    ConversationHandler.END
 
-async def enter_wallet_manager(update: Update , context: CallbackContext) -> int:
+
+async def enter_wallet_manager(update: Update, context: CallbackContext) -> int:
     # Create the two buttons
     print("in enter wallet manager")
     button1 = InlineKeyboardButton("Create New Wallet", callback_data="create_wallet")
@@ -183,7 +224,10 @@ async def enter_wallet_manager(update: Update , context: CallbackContext) -> int
 
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    await context.bot.send_message(update.effective_chat.id,"wallet manager", reply_markup=reply_markup)
+    wallet_manager_buttons = await context.bot.send_message(
+        update.effective_chat.id, "wallet manager", reply_markup=reply_markup
+    )
+    context.user_data["wallet_manager_buttons"] = wallet_manager_buttons.id
     return SHOW_BUTTONS
 
 
@@ -193,27 +237,29 @@ async def fall_back(update: Update, context: CallbackContext):
     print("wallet manager fallback")
     command = update.message.text[1:]
     if command == "manage_wallets":
-        await enter_wallet_manager(update, context)
-        return ConversationHandler.END
+        return await enter_wallet_manager(update, context)
+        # return ConversationHandler.END
+
     print("ending wallet manager convo")
     return ConversationHandler.END
 
 
 wallet_manager_convo_handler = ConversationHandler(
-    entry_points=[CommandHandler("manage_wallets", enter_wallet_manager),
-                  CallbackQueryHandler(enter_wallet_manager,pattern="wallet_manager")],
+    entry_points=[
+        CommandHandler("manage_wallets", enter_wallet_manager),
+        CallbackQueryHandler(enter_wallet_manager, pattern="wallet_manager"),
+    ],
     states={
         SHOW_BUTTONS: [CallbackQueryHandler(button_click)],
-        ADD_SECRET: [MessageHandler(filters.TEXT, got_keys)],
+        ADD_SECRET: [MessageHandler(filters.TEXT & ~filters.COMMAND, got_keys)],
         EDIT_BUTTONS: [CallbackQueryHandler(editing_wallets)],
     },
     fallbacks=[
-        MessageHandler(filters.ALL, fall_back),
-        MessageHandler(filters.Command, fall_back),
-    ]
+        # MessageHandler(filters.ALL, fall_back),
+        # MessageHandler(filters.COMMAND, fall_back),
+    ],
+    allow_reentry=True
     # per_chat=True,
     # per_user=True,
     # per_message=True,
-    ,
-    conversation_timeout=7 * 60,
 )

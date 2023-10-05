@@ -36,6 +36,11 @@ class Swap(Token):
         except Exception as e :
             raise e
 
-    async def buy(self,eth_to_spend:int):
-  
+    async def buy(self,eth_to_spend:float):
         return await self.swap_eth_for_tokens(eth_to_spend=eth_to_spend)
+    
+    async def swap_for_eth(self,token_amount_to_sell:float):
+        return await self.swap_tokens_for_eth(token_to_spend=token_amount_to_sell)
+
+    async def get_coin_balance(self,_token_address : str):
+        return self._get_token_balance(_token_address)

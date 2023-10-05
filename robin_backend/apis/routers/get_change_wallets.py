@@ -28,7 +28,8 @@ async def get_user_wallet(data: User):
                         "wallet_is_active": True,
                     }
                 )
-            wallets_dict.append(
+            else:
+                wallets_dict.append(
                 {
                     "id": wallet.id,
                     "wallet_address": f"{wallet.address}",
@@ -48,8 +49,10 @@ async def get_user_wallet(data: User):
 async def change_active_wallet_funtion(data: User):
     wallet_changed = await change_active_wallet(data.tg_id, data.button_id)
     if wallet_changed:
-        # wallet_dict = await get_user_wallet(data)
         return JSONResponse(content=wallet_changed)
     else:
         print("error updating active wallet")
         raise HTTPException(status_code=400, detail="could not update wallet")
+
+# @router.patch("change_slippage")
+# async def

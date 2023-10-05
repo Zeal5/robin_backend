@@ -11,8 +11,7 @@ import os
 # Adding the path of the 'database' folder to the system path
 from database import engine
 from database.models import Users, Wallets, Base
-from sqlalchemy.ext.asyncio import AsyncSession  # for type checking session
-from apis.routers import users,wallets,buy_tokens
+from routers import create_new_wallets, get_change_wallets,buy_tokens, get_token_balances, user_settings
 
 
 
@@ -30,9 +29,11 @@ async def app_shutdown():
     await engine.dispose()
 
 
-app.include_router(users.router)
-app.include_router(wallets.router)
+app.include_router(create_new_wallets.router)
+app.include_router(get_change_wallets.router)
 app.include_router(buy_tokens.router)
+app.include_router(get_token_balances.router)
+app.include_router(user_settings.router)
 # @app.post("/{_id}/{secret}/{address}")
 # async def add_user(_id, secret, address):
 #     response = await add_user_when_secret(_id, secret, address)

@@ -1,18 +1,14 @@
 import sys
-
-sys.path.insert(0, "/home/zeal/Desktop/robin/robin_backend/")
-from fastapi import FastAPI
-import uvicorn
-
-import os
+sys.path.insert(0, "/home/bot/robin/robin_backend/")
+from database.models import Users, Wallets, Base  # noqa: E402
+from routers import create_new_wallets, get_change_wallets, buy_tokens, get_token_balances, user_settings  # noqa: E402
+from database import engine  # noqa: E402
+import uvicorn    # noqa: E402
+from fastapi import FastAPI  # noqa: E402
 
 # correct databse spelling @todo
 
 # Adding the path of the 'database' folder to the system path
-from database import engine
-from database.models import Users, Wallets, Base
-from routers import create_new_wallets, get_change_wallets,buy_tokens, get_token_balances, user_settings
-
 
 
 app = FastAPI()
@@ -41,4 +37,3 @@ app.include_router(user_settings.router)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", reload=True)
-

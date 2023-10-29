@@ -23,18 +23,18 @@ async def get_user_wallet(data: User):
                 wallets_dict.append(
                     {
                         "id": wallet.id,
-                        "wallet_address": f"{wallet.address}",
+                        "address": f"{wallet.address}",
                         "wallet_name": wallet.name,
-                        "wallet_is_active": True,
+                        "is_active": True,
                     }
                 )
             else:
                 wallets_dict.append(
                 {
                     "id": wallet.id,
-                    "wallet_address": f"{wallet.address}",
+                    "address": f"{wallet.address}",
                     "wallet_name": wallet.name,
-                    "wallet_is_active": False,
+                    "is_active": False,
                 }
             )
 

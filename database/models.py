@@ -35,7 +35,7 @@ class Users(Base):
     __tablename__ = "user"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    tg_id: Mapped[int] = mapped_column(nullable=False, index=True, unique=True)
+    tg_id  = mapped_column(BIGINT,nullable=False, index=True, unique=True)
 
     wallets = relationship(
         "Wallets", backref="user", uselist=True, cascade="all, delete-orphan"
@@ -60,7 +60,7 @@ class UserSettings(Base):
     is_banned: Mapped[bool] = mapped_column(Boolean, default=False)
     enable_notifications: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    user_id: Mapped[int] = Column(Integer, ForeignKey("user.id"),unique=True)
+    user_id = Column(Integer, ForeignKey("user.id"),unique=True)
     # user = relationship("Users", back_populates="settings")
 
     # contraints

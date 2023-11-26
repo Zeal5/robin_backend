@@ -2,12 +2,13 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from database.wallet_manager import get_wallets, get_active_wallets_id, change_active_wallet
 from fastapi.responses import JSONResponse
+from typing import Optional
 router = APIRouter()
 
 
 class User(BaseModel):
     tg_id: int
-    button_id: int = None
+    button_id : Optional[int] = None 
 
 
 @router.post("/get_wallets")
@@ -42,11 +43,12 @@ async def get_user_wallet(data: User):
         return wallets_dict
 
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=400, detail=f"{e}")
 
 
 @router.patch("/change_active_wallet")
-async def change_active_wallet_funtion(data: User):
+async def change_active_wallet_funtion(data: User) -> bool | str:
     wallet_changed = await change_active_wallet(data.tg_id, data.button_id)
     if wallet_changed:
         return JSONResponse(content=wallet_changed)

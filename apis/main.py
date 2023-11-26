@@ -2,6 +2,7 @@ import sys
 sys.path.insert(0, "/home/bot/robin/robin_backend/")
 from database.models import Users, Wallets, Base  # noqa: E402
 from routers import create_new_wallets, get_change_wallets, buy_tokens, get_token_balances, user_settings  # noqa: E402
+from routers.token_autopsy import token_details
 from database import engine  # noqa: E402
 import uvicorn    # noqa: E402
 from fastapi import FastAPI  # noqa: E402
@@ -30,6 +31,7 @@ app.include_router(get_change_wallets.router)
 app.include_router(buy_tokens.router)
 app.include_router(get_token_balances.router)
 app.include_router(user_settings.router)
+app.include_router(token_details.router)
 # @app.post("/{_id}/{secret}/{address}")
 # async def add_user(_id, secret, address):
 #     response = await add_user_when_secret(_id, secret, address)

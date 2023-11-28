@@ -1,6 +1,5 @@
 from sqlalchemy import (
     Column,
-    DateTime,
     String,
     ForeignKey,
     Boolean,
@@ -32,10 +31,10 @@ wallets ( foreign key)
 
 
 class Users(Base):
-    __tablename__ = "user"
+    __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    tg_id  = mapped_column(BIGINT,nullable=False, index=True, unique=True)
+    tg_id: Mapped[int]  = mapped_column(BIGINT,nullable=False, index=True, unique=True)
 
     wallets = relationship(
         "Wallets", backref="user", uselist=True, cascade="all, delete-orphan"
@@ -60,8 +59,7 @@ class UserSettings(Base):
     is_banned: Mapped[bool] = mapped_column(Boolean, default=False)
     enable_notifications: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    user_id = Column(Integer, ForeignKey("user.id"),unique=True)
-    # user = relationship("Users", back_populates="settings")
+    user_id = Column(Integer, ForeignKey("users.id"),unique=True)
 
     # contraints
     __table_args__ = (
@@ -80,7 +78,7 @@ class Wallets(Base):
     address: Mapped[str] = mapped_column(String, nullable=False)
     name: Mapped[Optional[str]] = mapped_column(String)
 
-    user_id = Column(BIGINT, ForeignKey("user.id"))
+    user_id = Column(BIGINT, ForeignKey("users.id"))
     # user = relationship("Users", back_populates="wallets")
     active_wallet = relationship(
         "ActiveWallets", backref="wallet", uselist=False
@@ -92,12 +90,8 @@ class ActiveWallets(Base):
     __tablename__ = "active_wallet"
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    user_id: Mapped[int] = Column(Integer, ForeignKey("user.id"),unique=True)
-    wallet_id: Mapped[int] = Column(Integer, ForeignKey("wallet.id"),unique=True)
-
-    # user = relationship("Users", back_populates="active_wallet")
-    # wallet = relationship("Wallets", back_populates="active_wallet")
-
+    user_id = Column(Integer, ForeignKey("users.id"),unique=True)
+    wallet_id = Column(Integer, ForeignKey("wallet.id"),unique=True)
 
 
 class TokensBought(Base):
@@ -105,23 +99,6 @@ class TokensBought(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    user_id: Mapped[int] = Column(Integer, ForeignKey("user.id"))
-    token_name: Mapped[str] = Column(String)
-    token_address: Mapped[str] = Column(String)
-
-    # user = relationship("Users", back_populates="tokens")
-
-
-
-"""
--- INSERT INTO public."user" (tg_id) VALUES (123);
-
--- insert into public."user_settings" (slippage, user_id, is_premium, is_banned, enable_notifications ) 
--- VALUES (2, 1, True, False, True);
-
--- insert into public."wallet" (secret, address, name, user_id) 
--- VALUES ('gp','ij', 'n', 1);
-
-insert into public."active_wallet" (user_id, wallet_id) 
-VALUES (1,1);
-"""
+    user_id = Column(Integer, ForeignKey("users.id"))
+    token_name = Column(String)
+    token_address = Column(String)

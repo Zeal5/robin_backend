@@ -97,7 +97,6 @@ async def add_user_and_keys(
                 await s.flush()
                 print(f"new user = {new_user.id}")
                 print(f"new_wallet = {new_wallet.id}")
-                Users
                 new_active_wallet = ActiveWallets(
                     user_id=new_user.id, wallet_id=new_wallet.id
                 )

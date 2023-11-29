@@ -3,7 +3,7 @@ from goplus.token import Token
 from web3 import AsyncWeb3, AsyncHTTPProvider
 from fastapi import HTTPException
 from pydantic import BaseModel
-
+import asyncio
 # from . import token_abi as ERC20_token_abi, uniswap_router_abi
 from web3.exceptions import ContractLogicError
 import json
@@ -11,7 +11,7 @@ from . import ERC20_token_abi, ERC165_token_abi
 import aiohttp
 from typing import Any, Optional, Union, List, Dict
 from dataclasses import dataclass
-
+from .token_model_class import TokenInfo, TokenModel, LiquidityModel, PriceChangeModel, TxnsModel, VolumeModel, DexScreenerModel
 
 with open("config.json") as f:
     config = json.load(f)
@@ -19,51 +19,6 @@ with open("config.json") as f:
 rpc_url = "blutgang_load_balancer_url"
 
 
-class TokenInfo(BaseModel):
-    anti_whale_modifiable: Optional[str]
-    buy_tax: Optional[str]
-    can_take_back_ownership: Optional[str]
-    cannot_buy: Optional[str]
-    cannot_sell_all: Optional[str]
-    creator_address: Optional[str]
-    creator_balance: Optional[str]
-    creator_percent: Optional[str]
-    dex: Optional[List[Dict]]
-    external_call: Optional[str]
-    hidden_owner: Optional[str]
-    holder_count: Optional[str]
-    holders: Optional[List[Dict]]
-    honeypot_with_same_creator: Optional[str]
-    is_airdrop_scam: Optional[str]
-    is_anti_whale: Optional[str]
-    is_blacklisted: Optional[str]
-    is_honeypot: Optional[str]
-    is_in_dex: Optional[str]
-    is_mintable: Optional[str]
-    is_open_source: Optional[str]
-    is_proxy: Optional[str]
-    is_true_token: Optional[str]
-    is_whitelisted: Optional[str]
-    lp_holder_count: Optional[str]
-    lp_holders: Optional[List[Dict]]
-    lp_total_supply: Optional[str]
-    note: Optional[str]
-    other_potential_risks: Optional[str]
-    owner_address: Optional[str]
-    owner_balance: Optional[str]
-    owner_change_balance: Optional[str]
-    owner_percent: Optional[str]
-    personal_slippage_modifiable: Optional[str]
-    selfdestruct: Optional[str]
-    sell_tax: Optional[str]
-    slippage_modifiable: Optional[str]
-    token_name: Optional[str]
-    token_symbol: Optional[str]
-    total_supply: Optional[str]
-    trading_cooldown: Optional[str]
-    transfer_pausable: Optional[str]
-    trust_list: Optional[str]
-    error: Optional[str] = None
 
 
 class TokenDoc:
@@ -89,10 +44,45 @@ class TokenDoc:
         return len(iscontract.hex()) > 2
 
     async def get_data(self):
+        dex_screener_data = await self.get_dexscreener_data()
+        return dex_screener_data
+
+
+    async def get_dexscreener_data(self):
+        async with aiohttp.ClientSession() as Session:
+            async with Session.get(f"{config['dexscreener']['base_url']}{config['dexscreener']['search']}{self.token_address}") as response:
+                print(response.status)
+                if response.status == 200:
+                    pairs = await response.json() 
+                    print(f"pairs => {pairs}")
+                    pair_with_more_liq = None
+                    # loop over all pairs and only select pairs which are on eth uniswap v2/v2
+                    for pair in pairs['pairs']:
+                        if pair.get('chainId') == 'ethereum' and pair.get('dexId') == 'uniswap' and  pair.get('labels')[0] in ['v2','v3']:
+                            if pair_with_more_liq is None:
+                                pair_with_more_liq = pair
+
+                            elif pair.get('fdv') > pair_with_more_liq.get('fdv'):
+                                pair_with_more_liq = pair
+                    if pair_with_more_liq is None:
+                        raise HTTPException(status_code= 400, detail= "Pair not found on Uniswap ethereum")
+                    dexscreener_data = DexScreenerModel.model_validate(pair_with_more_liq)
+                    goplus_data = await self.get_goplus_data(dexscreener_data.baseToken.address)
+                    return goplus_data, dexscreener_data
+                    
+
+                    
+                            
+                            
+
+
+
+    async def get_goplus_data(self,_token_address) -> TokenInfo:
+        # Fetch token security details from GoPlus
         data = (
             Token(access_token=None)
             .token_security(
-                chain_id="1", addresses=[self.token_address]
+                chain_id="1", addresses=[_token_address]
             )
             .to_dict()
         )
@@ -102,6 +92,7 @@ class TokenDoc:
             internal_dict_key = list(result_dict.keys())[0]
             print(internal_dict_key)
             clean_data = result_dict[internal_dict_key]
+            # @TODO use TokenInfo.model_validate to validate data 
             token_info = TokenInfo(**clean_data)
             print("succes getting token security into")
             return token_info

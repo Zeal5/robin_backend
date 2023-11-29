@@ -19,8 +19,6 @@ with open("config.json") as f:
 rpc_url = "blutgang_load_balancer_url"
 
 
-
-
 class TokenDoc:
     def __init__(self, token_address: str, wallet_address: Optional[str] = None):
         self.web3 = AsyncWeb3(AsyncHTTPProvider(config[rpc_url]))
@@ -71,12 +69,6 @@ class TokenDoc:
                     return goplus_data, dexscreener_data
                     
 
-                    
-                            
-                            
-
-
-
     async def get_goplus_data(self,_token_address) -> TokenInfo:
         # Fetch token security details from GoPlus
         data = (
@@ -101,92 +93,3 @@ class TokenDoc:
             print("something went wrong")
             return TokenInfo(error="something went wrong")
 
-
-"""
-        match data:
-            case {
-                "code": _code,
-                "message": _message,
-                "result": {
-                    self.token_address: {
-                        "anti_whale_modifiable": _anti_whale,
-                        "buy_tax": _buy_tax,
-                        "can_take_back_ownership": _can_take_back_ownership,
-                        "cannot_buy": _cannot_buy,
-                        "cannot_sell_all": _cannot_sell,
-                        "creator_address": _creator_address,
-                        "creator_balance": _creator_balance,
-                        "creator_percent": _creator_balance_percentage,
-                        "external_call": _external_call,
-                        "hidden_owner": _hidden_owner,
-                        "holder_count": _holder_count,
-                        "holders": _X,
-                        "honeypot_with_same_creator": _honeypot_with_same_creator,
-                        "is_anti_whale": _is_anti_whale,
-                        "is_blacklisted": _is_blacklisted,
-                        "is_honeypot": _is_honeypot,
-                        "is_in_dex": _is_in_dex,
-                        "is_mintable": _is_mintable,
-                        "is_open_source": _is_open_source,
-                        "is_proxy": _is_proxy,
-                        "is_whitelisted": _is_whitelisted,
-                        "owner_address": _owner_address,
-                        "owner_balance": _owner_balance,
-                        "owner_change_balance": _owner_change_balance,
-                        "owner_percent": _owner_percent,
-                        "personal_slippage_modifiable": _personal_slippage_modifiable,
-                        "selfdestruct": _self_destruct,
-                        "sell_tax": _sell_tax,
-                        "slippage_modifiable": _slippage_modifiable,
-                        "token_name": _token_name,
-                        "token_symbol": _token_symbol,
-                        "total_supply": _total_supply,
-                        "trading_cooldown": _trading_cooldown,
-                        "transfer_pausable": _transfer_pausable,
-                    }
-                },
-            }:
-                # Create instances of TokenInfo and TokenResult
-                token_info_instance = TokenInfo(_code, _message)
-                token_result_instance = TokenResult(
-                    _anti_whale,
-                    _buy_tax,
-                    _can_take_back_ownership,
-                    _cannot_buy,
-                    _cannot_sell,
-                    _creator_address,
-                    _creator_balance,
-                    _creator_balance_percentage,
-                    _external_call,
-                    _hidden_owner,
-                    _holder_count,
-                    _X,
-                    _honeypot_with_same_creator,
-                    _is_anti_whale,
-                    _is_blacklisted,
-                    _is_honeypot,
-                    _is_in_dex,
-                    _is_mintable,
-                    _is_open_source,
-                    _is_proxy,
-                    _is_whitelisted,
-                    _owner_address,
-                    _owner_balance,
-                    _owner_change_balance,
-                    _owner_percent,
-                    _personal_slippage_modifiable,
-                    _self_destruct,
-                    _sell_tax,
-                    _slippage_modifiable,
-                    _token_name,
-                    _token_symbol,
-                    _total_supply,
-                    _trading_cooldown,
-                    _transfer_pausable,
-                )
-                return token_info_instance, token_result_instance
-
-            case _:
-                print(data)
-                return "Nothiing matched"
-"""

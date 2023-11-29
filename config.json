@@ -1,4 +1,11 @@
 {
-    "web3_provider_url" : "http://127.0.0.1:8545",
-    "blutgang_load_balancer_url" : "http://127.0.0.1:3000"
+    "dexscreener": {
+        "base_url": "https://api.dexscreener.com/latest/dex/",
+        "pairs": "pairs/",
+        "tokens": "tokens/",
+        "search": "search/?q=",
+        "parameters": "https://api.dexscreener.com/latest/dex/pairs/:chainId/:pairAddresses\nchainID\tstring ethereum | bsc | polygon | etc..\npairAddress\tstring\tOne or multiple, comma-separated pair addresses (up to 30 addresses)\nhttps://api.dexscreener.com/latest/dex/tokens/:tokenAddreses\ntokenAddress\tstring\tOne or multiple, commaseparated token addresses (up to 30 addresses)\nhttps://api.dexscreener.com/latest/dex/search/?q=:q\nq\tstring\tquery E.g:WBTC or WBTC/USDC"
+    },
+    "web3_provider_url": "http://127.0.0.1:8545",
+    "blutgang_load_balancer_url": "http://127.0.0.1:3000"
 }

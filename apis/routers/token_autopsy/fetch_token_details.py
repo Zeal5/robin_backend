@@ -11,7 +11,7 @@ from . import ERC20_token_abi, ERC165_token_abi
 import aiohttp
 from typing import Any, Optional, Union, List, Dict
 from dataclasses import dataclass
-from .token_model_class import TokenInfo, TokenModel, LiquidityModel, PriceChangeModel, TxnsModel, VolumeModel, DexScreenerModel
+from .token_models import TokenInfo, TokenModel, LiquidityModel, PriceChangeModel, TxnsModel, VolumeModel, DexScreenerModel
 
 with open("config.json") as f:
     config = json.load(f)
@@ -49,10 +49,8 @@ class TokenDoc:
     async def get_dexscreener_data(self):
         async with aiohttp.ClientSession() as Session:
             async with Session.get(f"{config['dexscreener']['base_url']}{config['dexscreener']['search']}{self.token_address}") as response:
-                print(response.status)
                 if response.status == 200:
                     pairs = await response.json() 
-                    print(f"pairs => {pairs}")
                     pair_with_more_liq = None
                     # loop over all pairs and only select pairs which are on eth uniswap v2/v2
                     for pair in pairs['pairs']:
